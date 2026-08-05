@@ -1,8 +1,6 @@
 
-<resolve-cancel>
-# resolve and cancel
-
-`resolve` = the plan is complete. Call from execution mode when all steps are done. Submits the outcome.
+<cancel>
+# cancel
 
 `cancel` = abandon the current mode and return to chat. Use when:
 
@@ -13,4 +11,4 @@
 - The user wants to stop the current plan or execution
 
 `cancel` is not failure — it's a mode transition back to conversation.
-</resolve-cancel>
+</cancel>

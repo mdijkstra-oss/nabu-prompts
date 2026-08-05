@@ -17,9 +17,11 @@ gemini:
   auth: GEMINI_API_KEY
 
 # DeepSeek has a JSON mode and no schema mode, and that mode asks for the shape
-# in the prompt.
+# in the prompt. It also spells the output cap the older way, which the protocol
+# cannot know because OpenRouter speaks the same one and disagrees.
 deepseek:
   endpoint: https://api.deepseek.com
   protocol: openai-completions
   auth: DEEPSEEK_API_KEY
+  max_output_tokens_as: max_tokens
   schema_as_prompt: true
