@@ -4,9 +4,6 @@ The agents [nabu-frontend](https://github.com/mdijkstra-oss/nabu-frontend) calls
 
 A prompt is a Markdown file whose path is its route and whose frontmatter picks its model. [chancery](https://github.com/mdijkstra-oss/chancery) turns the directory into HTTP endpoints; [dragoman](https://github.com/mdijkstra-oss/dragoman) translates each request into whatever dialect the provider speaks. Neither is vendored here — `compose.yaml` builds both from their own repositories, so this repository is the prompts, the model table, and the service table, and nothing else.
 
-> [!WARNING]
-> The frontend cannot run against this yet. Its mode overlays reach the model as literal text, and its retrieval needs an `/embeddings` route no binary here serves. [What isn't served](#what-isnt-served) covers both.
-
 ## Running it
 
 ```sh
@@ -43,44 +40,47 @@ deep-analysis-filter
 file-hyde                 gemini/gemini-3.1-flash-lite  minimal
 generic-hyde              gemini/gemini-3.1-flash-lite  minimal
 hyde-generator            gemini/gemini-2.5-flash-lite  minimal
-qual-coder                deepseek/deepseek-v4-pro      high
+qual-coder                                              
+  .chat (default)         deepseek/deepseek-v4-pro      high
+  .execution              deepseek/deepseek-v4-pro      high
+  .planning               deepseek/deepseek-v4-pro      high
 refine-code               anthropic/claude-opus-4-6     medium
 scout-filter              deepseek/deepseek-v4-flash    none
 section-labeler           gemini/gemini-3.1-flash-lite  minimal
 semantic-filter           deepseek/deepseek-v4-pro      none
 topic-assigner            gemini/gemini-2.5-flash-lite  minimal
-15 agents · 16 models
+15 agents · 18 models
 ```
 
 Eleven of them have a caller in `nabu-frontend`. Four do not: `commit-agent` waits on a git backend that `nabu-storage` has not built, `cv` answers visitor questions on a personal site rather than anything in nabu, and `compacter` and `section-labeler` have no reference in the frontend at all. They are served anyway — an agent nothing calls costs a route table entry — but nothing here exercises them.
 
-`deep-analysis-filter` is the multimodal consensus step, and the one agent that names more than one model. Both voters share the prompt; a route suffix reaches one of them.
+`deep-analysis-filter` is the multimodal consensus step. Both voters share the prompt, and a route suffix reaches one of them. `qual-coder` uses the same suffix mechanism for a different purpose — see [Modes](#modes).
 
 ## Pointing the frontend at it
 
 Set `VITE_LLM_HOST` to chancery's published port, and `CORS_ORIGINS` in `.env` to the frontend's own origin — chancery denies every cross-origin request when that is empty, and the frontend is a browser app.
 
-## What isn't served
+## Embeddings are somewhere else
 
-### Embeddings
+Nothing here answers `/embeddings`. chancery builds exactly one URL, `{RESPONSES_BASE_URL}/responses`, and dragoman serves `/responses`, `/services` and `/health`, so an agent file cannot reach an embedding model — every route it can name ends at a chat endpoint.
 
-> [!IMPORTANT]
-> Not built. The frontend's RAG cannot work against this stack.
+That is the point rather than a gap. No provider key resolves inside chancery, and an embeddings route here would put one there. [nabu-embeddings](https://github.com/mdijkstra-oss/nabu-embeddings) holds that key and serves the route, behind the frontend's own `VITE_EMBEDDINGS_HOST`.
 
-`app/lib/embeddings/client.ts` posts `{input: string[]}` to `/embeddings` and expects `{data: [{index, embedding}], usage}` back. chancery builds exactly one URL, `{RESPONSES_BASE_URL}/responses`, and dragoman serves `/responses`, `/services` and `/health`. An agent file cannot reach an embedding model, because every route it can name ends at a chat endpoint.
+## Modes
 
-Whoever solves this decides where an embeddings route belongs: a second dialect surface in dragoman, or something beside it.
+`qual-coder` answers on three routes rather than one. Each names its own alias in `models.yaml`, and the two mode aliases differ from the plain one only by a `prompt:`:
 
-### Modes
+```yaml
+  deepseek-v4-pro-planning:
+    extends: deepseek-v4-pro
+    prompt: nabu/modes/planning.md
+```
 
-> [!IMPORTANT]
-> Not wired. The prompts are here and reachable by no route.
+An alias prompt resolves against `shared/`, and chancery puts it in front of the agent's own, so `/qual-coder.planning` is the chat agent with the planning overlay ahead of its identity. `default: chat` keeps the bare `/qual-coder` route serving the unmodified agent.
 
-`modes/planning.md` and `modes/execution.md` are mode overlays, each composing its own subdirectory with the same `[include.md]` syntax an agent uses. They sit at the repository root rather than under `config/`, because chancery reports any frontmatter-less Markdown in its configuration directory as an orphan and would refuse to start.
+The frontend derives which mode it is in from its own conversation and picks the route from that, so nothing about the mode travels in the body.
 
-The frontend asks for one by pushing `<!-- prompt: planning -->` into the message array, expecting the server to swap in the compiled overlay. chancery's serving path never decodes the message array — that invariant is most of why it is small — so the marker reaches the model as literal text.
-
-The cheapest fix is the shape `deep-analysis-filter` already uses: make each mode a named model on `qual-coder`, so `/qual-coder.planning` carries the overlay and the frontend sends a path instead of a marker. That trades a marker in the body for a route, and needs no feature in chancery.
+Both overlays are single files. An alias prompt is read as-is, without the `[include.md]` resolution an agent's Markdown body gets, so anything an overlay needs has to be in it.
 
 ## Configuration
 

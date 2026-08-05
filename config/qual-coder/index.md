@@ -1,6 +1,13 @@
 ---
 description: "main qualitative coding agent — annotates research text against codebook"
-model: deepseek-v4-pro
+models:
+  chat:
+    model: deepseek-v4-pro
+  planning:
+    model: deepseek-v4-pro-planning
+  execution:
+    model: deepseek-v4-pro-execution
+default: chat
 reasoning_effort: high
 ---
 [nabu/identity.md]

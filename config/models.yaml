@@ -86,3 +86,11 @@ models:
     model: deepseek/deepseek-v4-flash
   deepseek-v4-pro:
     model: deepseek/deepseek-v4-pro
+  # qual-coder's mode routes. The overlay is prepended to the agent's own prompt,
+  # so /qual-coder.planning is the chat agent told it is planning.
+  deepseek-v4-pro-planning:
+    extends: deepseek-v4-pro
+    prompt: nabu/modes/planning.md
+  deepseek-v4-pro-execution:
+    extends: deepseek-v4-pro
+    prompt: nabu/modes/execution.md
