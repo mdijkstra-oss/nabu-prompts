@@ -5,7 +5,7 @@ The agents [nabu-frontend](https://github.com/mdijkstra-oss/nabu-frontend) calls
 A prompt is a Markdown file whose path is its route and whose frontmatter picks its model. [chancery](https://github.com/mdijkstra-oss/chancery) turns the directory into HTTP endpoints; [dragoman](https://github.com/mdijkstra-oss/dragoman) translates each request into whatever dialect the provider speaks. Neither is vendored here — `compose.yaml` builds both from their own repositories, so this repository is the prompts, the model table, and the service table, and nothing else.
 
 > [!WARNING]
-> The frontend cannot talk to this yet. Its body is now `openai-responses`, but two fields still carry the names hermes-logos gave them, and it needs an `/embeddings` route no binary here serves. [Pointing the frontend at it](#pointing-the-frontend-at-it) is the list of what has to change.
+> The frontend cannot run against this yet. Its mode overlays reach the model as literal text, and its retrieval needs an `/embeddings` route no binary here serves. [What isn't served](#what-isnt-served) covers both.
 
 ## Running it
 
@@ -36,10 +36,10 @@ commit-agent              openai/gpt-5-mini             off
 compacter                 gemini/gemini-3.5-flash       minimal
 corpus-describer          gemini/gemini-3.1-flash-lite  minimal
 cv                        gemini/gemini-3.5-flash       none
-deep-analysis-adjudicate  anthropic/claude-opus-4-6     medium
+deep-analysis-adjudicate  anthropic/claude-fable-5      low
 deep-analysis-filter                                    
-  .deep                   anthropic/claude-opus-4-6     low
-  .fast (default)         openai/gpt-5.5                low
+  .anthropic              anthropic/claude-opus-5       low
+  .openai (default)       openai/gpt-5.6                low
 file-hyde                 gemini/gemini-3.1-flash-lite  minimal
 generic-hyde              gemini/gemini-3.1-flash-lite  minimal
 hyde-generator            gemini/gemini-2.5-flash-lite  minimal
@@ -54,19 +54,11 @@ topic-assigner            gemini/gemini-2.5-flash-lite  minimal
 
 Eleven of them have a caller in `nabu-frontend`. Four do not: `commit-agent` waits on a git backend that `nabu-storage` has not built, `cv` answers visitor questions on a personal site rather than anything in nabu, and `compacter` and `section-labeler` have no reference in the frontend at all. They are served anyway — an agent nothing calls costs a route table entry — but nothing here exercises them.
 
-`deep-analysis-filter` is the multimodal consensus step, and it is the one agent whose shape changed in the move. It used to be an array of two model configurations that both ran; here it is two named models on one prompt, and a route reaches one of them.
+`deep-analysis-filter` is the multimodal consensus step, and the one agent that names more than one model. Both voters share the prompt; a route suffix reaches one of them.
 
 ## Pointing the frontend at it
 
 Set `VITE_LLM_HOST` to chancery's published port, and `CORS_ORIGINS` in `.env` to the frontend's own origin — chancery denies every cross-origin request when that is empty, and the frontend is a browser app.
-
-The response side already matches: the frontend parses `openai-responses` SSE, and the items it builds are Responses input items. So does the envelope — `buildRequestBody` sends `input` and `text.format`. Three things on the request side do not, and none of them can be fixed from this repository.
-
-**`extra_content` is a hermes field.** It appears nowhere in dragoman, which carries every provider's opaque state — an Anthropic thinking signature, a Gemini thought signature, DeepSeek's reasoning — in `encrypted_content` on the item it arrived on. That is the same channel under one name, so the fix is to emit `encrypted_content` where `convert.ts` currently emits both. Left as it is, the field is dropped and a conversation loses its reasoning state at every turn boundary.
-
-**Consensus votes are selected by a query parameter.** `step-filter.ts` builds `/deep-analysis-filter?model=0` and `?model=1` to reach the two voters. chancery routes on the path and reads only `?tool_choice=` and `?reasoning_summary=`, so both calls land on the default model and the two-model consensus becomes one model voting twice. Nothing errors. The replacement is a route suffix — `.fast` and `.deep` — indexed the same way.
-
-**Modes are pushed as a marker.** The frontend emits `<!-- prompt: planning -->` as a system message and expects the server to expand it. chancery never parses the message array, by design, so the marker travels to the model as literal text. See [Modes](#modes).
 
 ## What isn't served
 
@@ -75,7 +67,7 @@ The response side already matches: the frontend parses `openai-responses` SSE, a
 > [!IMPORTANT]
 > Not built. The frontend's RAG cannot work against this stack.
 
-`app/lib/embeddings/client.ts` posts `{input: string[]}` to `/embeddings` and expects `{data: [{index, embedding}], usage}` back. chancery builds exactly one URL, `{RESPONSES_BASE_URL}/responses`, and dragoman serves `/responses`, `/services` and `/health`. There is no route to configure, so `embeddings.md` — which named `text-embedding-3-large` and carried `type: embedding` and `dimensions: 1024` — was removed rather than left as a route that would forward an embedding model to a chat endpoint.
+`app/lib/embeddings/client.ts` posts `{input: string[]}` to `/embeddings` and expects `{data: [{index, embedding}], usage}` back. chancery builds exactly one URL, `{RESPONSES_BASE_URL}/responses`, and dragoman serves `/responses`, `/services` and `/health`. An agent file cannot reach an embedding model, because every route it can name ends at a chat endpoint.
 
 Whoever solves this decides where an embeddings route belongs: a second dialect surface in dragoman, or something beside it.
 
@@ -86,9 +78,9 @@ Whoever solves this decides where an embeddings route belongs: a second dialect 
 
 `modes/planning.md` and `modes/execution.md` are mode overlays, each composing its own subdirectory with the same `[include.md]` syntax an agent uses. They sit at the repository root rather than under `config/`, because chancery reports any frontmatter-less Markdown in its configuration directory as an orphan and would refuse to start.
 
-They were expanded server-side: the frontend pushed `<!-- prompt: planning -->` into the message array and hermes-logos replaced it with the compiled overlay. chancery's serving path never decodes the message array — that invariant is most of why it is small — so the mechanism has no equivalent and the marker reaches the model as text.
+The frontend asks for one by pushing `<!-- prompt: planning -->` into the message array, expecting the server to swap in the compiled overlay. chancery's serving path never decodes the message array — that invariant is most of why it is small — so the marker reaches the model as literal text.
 
-The cheapest way back is the shape `deep-analysis-filter` already uses: make each mode a named model on `qual-coder`, so `/qual-coder.planning` carries the overlay and the frontend sends a path instead of a marker. That trades a marker in the body for a route, and needs no feature in chancery.
+The cheapest fix is the shape `deep-analysis-filter` already uses: make each mode a named model on `qual-coder`, so `/qual-coder.planning` carries the overlay and the frontend sends a path instead of a marker. That trades a marker in the body for a route, and needs no feature in chancery.
 
 ## Configuration
 
@@ -104,15 +96,11 @@ The cheapest way back is the shape `deep-analysis-filter` already uses: make eac
 
 `dragoman.yaml` sits outside `config/` because it is the backend's file, not chancery's. It names the four services the aliases point at, each with an endpoint, a protocol, and the environment variable holding its key.
 
-Three settings from the hermes-logos configuration have no position in this format and were dropped:
-
-- `temperature` and `seed`, which made `hyde-generator` and `topic-assigner` deterministic. chancery has no frontmatter field for either. The frontend can send `temperature` in the body, where it reaches the provider untouched.
-- `legacy_thinking` on the two Gemini 2.5 models, which selected an older thinking configuration. dragoman has no such concept.
-- `compact_at` on `qual-coder`, a context threshold that is the caller's business and not a body field.
+`temperature` and `seed` are not among the fields an agent may pin, and `validate` reports either as unknown. A caller that needs one sends it in the body, where it reaches the provider untouched.
 
 ### Cache breakpoints run on each provider's default TTL
 
-The frontend places explicit cache breakpoints on the two consensus steps. An alias declares whether its model accepts them:
+The frontend places explicit cache breakpoints on the two consensus steps. Not every model accepts them, so an alias can refuse on its model's behalf:
 
 ```yaml
   gpt-5.5:
@@ -154,4 +142,4 @@ Editing a prompt is editing a file. `config/` and `dragoman.yaml` mount read-onl
 
 ## Next: nabu-frontend
 
-The remaining wire changes all land in one repository. `extra_content` is a field rename in `app/lib/agent/client/convert.ts`. The consensus vote is a route suffix in `app/lib/agent/tools/apply-deep-analysis/step-filter.ts`. Modes are a decision about where an overlay lives before they are a change to any file, and embeddings are a route somebody has to build.
+The app that calls every route here. Its README covers the document format these agents read, the query cascade that decides what reaches them, and the loop they run inside.

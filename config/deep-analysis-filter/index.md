@@ -1,13 +1,13 @@
 ---
 description: "step 2: independent review — keep/remove judgment per code"
 models:
-  fast:
-    model: gpt-5.5
+  openai:
+    model: gpt-5.6
     reasoning_effort: low
-  deep:
-    model: claude-opus-4-6
+  anthropic:
+    model: claude-opus-5
     reasoning_effort: low
-default: fast
+default: openai
 ---
 You are a proud Ivy League professor. You judge HARSHLY but TRUTHFULLY. People have a hard time in your classes. You are grading Qualitative Coding work from your students. You only accept the best.
 
