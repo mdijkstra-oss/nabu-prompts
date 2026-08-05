@@ -1,0 +1,80 @@
+models:
+  gpt-5.5:
+    model: openai/gpt-5.5
+    verbosity: low
+    reasoning_summary: concise
+    # Explicit cache breakpoints arrived with the 5.6 family; anything earlier
+    # answers 400 naming the field.
+    prompt_cache_breakpoints: false
+  gpt-5.4:
+    model: openai/gpt-5.4
+    verbosity: low
+    reasoning_summary: concise
+  gpt-5.4-mini:
+    model: openai/gpt-5.4-mini
+    verbosity: low
+    reasoning_summary: concise
+  gpt-5.4-nano:
+    model: openai/gpt-5.4-nano
+  gpt-5.4-nano-prio:
+    extends: gpt-5.4-nano
+    service_tier: priority
+  gpt-5.2:
+    model: openai/gpt-5.2
+    verbosity: low
+    reasoning_summary: concise
+  gpt-5.2-prio:
+    extends: gpt-5.2
+    service_tier: priority
+  gpt-5.1:
+    model: openai/gpt-5.1
+    verbosity: low
+    reasoning_summary: concise
+  gpt-5-mini:
+    model: openai/gpt-5-mini
+    verbosity: low
+    reasoning_summary: concise
+  gpt-5-mini-prio:
+    extends: gpt-5-mini
+    service_tier: priority
+  gpt-5-nano:
+    model: openai/gpt-5-nano
+  gpt-5-nano-prio:
+    extends: gpt-5-nano
+    service_tier: priority
+  gpt-4o-mini:
+    model: openai/gpt-4o-mini
+
+  claude-opus-4-6:
+    model: anthropic/claude-opus-4-6
+    reasoning_effort: minimal
+  claude-sonnet-4-6:
+    model: anthropic/claude-sonnet-4-6
+    reasoning_effort: minimal
+  claude-haiku-4-5:
+    model: anthropic/claude-haiku-4-5
+    reasoning_effort: none
+
+  gemini-3.1-pro:
+    model: gemini/gemini-3.1-pro
+    reasoning_effort: low
+  gemini-3.5-flash:
+    model: gemini/gemini-3.5-flash
+    reasoning_effort: minimal
+  gemini-3-flash:
+    model: gemini/gemini-3-flash
+    reasoning_effort: minimal
+  gemini-3.1-flash-lite:
+    model: gemini/gemini-3.1-flash-lite
+    reasoning_effort: minimal
+  gemini-2.5-flash-lite:
+    model: gemini/gemini-2.5-flash-lite
+    reasoning_effort: minimal
+  gemini-2.5-flash:
+    model: gemini/gemini-2.5-flash
+    reasoning_effort: minimal
+
+  deepseek-v4-flash:
+    model: deepseek/deepseek-v4-flash
+  deepseek-v4-pro:
+    model: deepseek/deepseek-v4-pro

@@ -1,0 +1,42 @@
+name: nabu-prompts
+
+services:
+  dragoman:
+    build:
+      context: ${DRAGOMAN_REPO:-https://github.com/mdijkstra-oss/dragoman.git#main}
+    # dragoman performs no client authentication, which is safe only because it
+    # publishes no host port.
+    environment:
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY:-}
+    volumes:
+      - ./dragoman.yaml:/etc/dragoman/dragoman.yaml:ro
+    # --config replaces dragoman's embedded service table wholesale. Naming a
+    # command here replaces the image default, and dragoman's own --addr default
+    # is loopback, which the other container cannot reach.
+    command: ["serve", "--addr", "0.0.0.0:8080", "--config", "/etc/dragoman/dragoman.yaml"]
+    # Publishing a port would hand every provider key above to anyone who can
+    # reach the host.
+    restart: unless-stopped
+
+  chancery:
+    build:
+      context: ${CHANCERY_REPO:-https://github.com/mdijkstra-oss/chancery.git#main}
+    ports:
+      - "${PORT:-8081}:8081"
+    environment:
+      RESPONSES_BASE_URL: http://dragoman:8080
+      PORT: 8081
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:5173}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+      ENV: ${ENV:-production}
+      LOG_REQUEST_HEADERS: ${LOG_REQUEST_HEADERS:-X-Session-ID,X-Project-ID}
+    volumes:
+      - ./config:/config:ro
+    # depends_on alone waits for start, not for listening.
+    depends_on:
+      dragoman:
+        condition: service_healthy
+    restart: unless-stopped

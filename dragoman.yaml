@@ -1,0 +1,25 @@
+# Replaces dragoman's embedded table wholesale. `auth` names the environment
+# variable holding a key, never a key.
+
+openai:
+  endpoint: https://api.openai.com/v1
+  protocol: openai-responses
+  auth: OPENAI_API_KEY
+
+anthropic:
+  endpoint: https://api.anthropic.com/v1
+  protocol: anthropic-messages
+  auth: ANTHROPIC_API_KEY
+
+gemini:
+  endpoint: https://generativelanguage.googleapis.com/v1beta
+  protocol: gemini-interactions
+  auth: GEMINI_API_KEY
+
+# DeepSeek has a JSON mode and no schema mode, and that mode asks for the shape
+# in the prompt.
+deepseek:
+  endpoint: https://api.deepseek.com
+  protocol: openai-completions
+  auth: DEEPSEEK_API_KEY
+  schema_as_prompt: true
