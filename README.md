@@ -7,11 +7,13 @@ A prompt is a Markdown file whose path is its route and whose frontmatter picks 
 ## Running it
 
 ```sh
-cp .env.example .env       # one provider key per service you call
+cp .env.example .env       # OPENAI_API_KEY is enough to start
 docker compose up
 ```
 
-chancery publishes `8081`. dragoman holds every provider key and publishes no port, which is what makes it safe for it to perform no client authentication.
+Every agent ships pointing at OpenAI, so one key runs the whole corpus. [Picking a provider](#picking-a-provider) is how to run it on a different one, or on all four.
+
+chancery publishes `8081`, or whatever `CHANCERY_PORT` says on the host side. dragoman holds every provider key and publishes no port, which is what makes it safe for it to perform no client authentication.
 
 A route whose provider has no key answers by naming the variable, which is the quickest way to see the whole chain resolve:
 
@@ -24,37 +26,59 @@ $ curl -s -X POST http://localhost:8081/topic-assigner \
 
 ## The agents
 
-Fifteen, one directory each, `index.md` carrying the frontmatter:
+Twelve, one directory each, `index.md` carrying the frontmatter:
 
 ```console
 $ chancery --config ./config list
-PATH                      MODEL                         REASONING
-commit-agent              openai/gpt-5-mini             off
-compacter                 gemini/gemini-3.5-flash       minimal
-corpus-describer          gemini/gemini-3.1-flash-lite  minimal
-cv                        gemini/gemini-3.5-flash       none
-deep-analysis-adjudicate  anthropic/claude-fable-5      low
-deep-analysis-filter                                    
-  .anthropic              anthropic/claude-opus-5       low
-  .openai (default)       openai/gpt-5.6                low
-file-hyde                 gemini/gemini-3.1-flash-lite  minimal
-generic-hyde              gemini/gemini-3.1-flash-lite  minimal
-hyde-generator            gemini/gemini-2.5-flash-lite  minimal
-qual-coder                                              
-  .chat (default)         deepseek/deepseek-v4-pro      high
-  .execution              deepseek/deepseek-v4-pro      high
-  .planning               deepseek/deepseek-v4-pro      high
-refine-code               anthropic/claude-opus-4-6     medium
-scout-filter              deepseek/deepseek-v4-flash    none
-section-labeler           gemini/gemini-3.1-flash-lite  minimal
-semantic-filter           deepseek/deepseek-v4-pro      none
-topic-assigner            gemini/gemini-2.5-flash-lite  minimal
-15 agents · 18 models
+PATH                      MODEL                 REASONING
+corpus-describer          openai/gpt-5.6-luna   minimal
+deep-analysis-adjudicate  openai/gpt-5.6-sol    low
+deep-analysis-filter                            
+  .anthropic              openai/gpt-5.6-sol    low
+  .openai (default)       openai/gpt-5.6-sol    low
+file-hyde                 openai/gpt-5.6-luna   minimal
+generic-hyde              openai/gpt-5.6-luna   minimal
+hyde-generator            openai/gpt-5.6-luna   minimal
+qual-coder                                      
+  .chat (default)         openai/gpt-5.6-sol    high
+  .execution              openai/gpt-5.6-sol    high
+  .planning               openai/gpt-5.6-sol    high
+refine-code               openai/gpt-5.6-sol    medium
+scout-filter              openai/gpt-5.6-terra  none
+section-labeler           openai/gpt-5.6-luna   minimal
+semantic-filter           openai/gpt-5.6-sol    none
+topic-assigner            openai/gpt-5.6-luna   minimal
+12 agents · 15 models
 ```
 
-Eleven of them have a caller in `nabu-frontend`. Four do not: `commit-agent` waits on a git backend that `nabu-storage` has not built, `cv` answers visitor questions on a personal site rather than anything in nabu, and `compacter` and `section-labeler` have no reference in the frontend at all. They are served anyway — an agent nothing calls costs a route table entry — but nothing here exercises them.
+Eleven have a caller in `nabu-frontend`. `section-labeler` does not, and is served anyway — an agent nothing calls costs a route table entry.
 
 `deep-analysis-filter` is the multimodal consensus step. Both voters share the prompt, and a route suffix reaches one of them. `qual-coder` uses the same suffix mechanism for a different purpose — see [Modes](#modes).
+
+## Picking a provider
+
+An agent's `model:` names a tier, never a provider model, so one file decides what the whole corpus runs on:
+
+| tier | agents |
+|---|---|
+| `lite` | `corpus-describer`, `file-hyde`, `generic-hyde`, `hyde-generator`, `section-labeler`, `topic-assigner` |
+| `mid` | `scout-filter` |
+| `strong` | `qual-coder` and its two mode routes, `semantic-filter`, `refine-code` |
+| `expert` | `deep-analysis-filter` and `deep-analysis-adjudicate` |
+
+`config/models.yaml` is the one chancery reads, and it ships as a copy of `models.openai.yaml`. Switching is one move:
+
+```sh
+cp config/models.anthropic.yaml config/models.yaml
+docker compose restart chancery
+```
+
+`models.multi.yaml` spreads the tiers across all four providers and needs a key for each. The rest — `models.openai.yaml`, `models.gemini.yaml`, `models.anthropic.yaml`, `models.deepseek.yaml` — each run everything on one.
+
+> [!IMPORTANT]
+> Consensus within a single provider is moot. Both `deep-analysis-filter` voters resolve to `expert`, so one model votes against itself and the adjudicator never sees a split. The single-provider files are for running nabu with one key, not for research output.
+
+A provider whose published line is shorter than four tiers collapses them: Gemini's Pro line is preview-only, so `strong` reuses the `mid` model; DeepSeek publishes two models, so `lite` and `mid` share one. Each file says which of its tiers is a reused model.
 
 ## Pointing the frontend at it
 
@@ -71,8 +95,8 @@ That is the point rather than a gap. No provider key resolves inside chancery, a
 `qual-coder` answers on three routes rather than one. Each names its own alias in `models.yaml`, and the two mode aliases differ from the plain one only by a `prompt:`:
 
 ```yaml
-  deepseek-v4-pro-planning:
-    extends: deepseek-v4-pro
+  strong-planning:
+    extends: strong
     prompt: nabu/modes/planning.md
 ```
 
@@ -92,23 +116,24 @@ Both overlays are single files. An alias prompt is read as-is, without the `[inc
 | `<agent>/*.md` | fragments that agent includes by name |
 | `shared/` | fragments any agent can include |
 | `tools/` | prompts pulled in when a request offers the tool named after the last dot |
-| `models.yaml` | the alias an agent's `model:` names, and the settings it runs with |
+| `models.yaml` | the tier an agent's `model:` names, and the settings it runs with |
+| `models.*.yaml` | the alternatives — see [Picking a provider](#picking-a-provider) |
 
-`dragoman.yaml` sits outside `config/` because it is the backend's file, not chancery's. It names the four services the aliases point at, each with an endpoint, a protocol, and the environment variable holding its key.
+`dragoman.yaml` sits outside `config/` because it is the backend's file, not chancery's. It names the four services a tier can point at, each with an endpoint, a protocol, and the environment variable holding its key. It does not change when the tier file does — a service nobody calls costs a table row.
 
 `temperature` and `seed` are not among the fields an agent may pin, and `validate` reports either as unknown. A caller that needs one sends it in the body, where it reaches the provider untouched.
 
 ### Cache breakpoints run on each provider's default TTL
 
-The frontend places explicit cache breakpoints on the two consensus steps. Not every model accepts them, so an alias can refuse on its model's behalf:
+The frontend places explicit cache breakpoints on the two consensus steps, which reach the `expert` tier. Not every model accepts them, so a tier can refuse on its model's behalf:
 
 ```yaml
-  gpt-5.5:
-    model: openai/gpt-5.5
+  expert:
+    model: gemini/gemini-3.6-flash
     prompt_cache_breakpoints: false
 ```
 
-chancery forwards that as a query parameter and dragoman removes the breakpoints on the way in, so a route reaching a model that refuses them answers normally instead of failing. Explicit breakpoints arrived with OpenAI's 5.6 family; anything earlier answers `400` naming the field.
+chancery forwards that as a query parameter and dragoman removes the breakpoints on the way in, so a route reaching a model that refuses them answers normally instead of failing. The Gemini and DeepSeek files both set it, because whether either accepts explicit breakpoints is unverified — refusing costs the explicit cache and keeps the implicit one. Explicit breakpoints arrived with OpenAI's 5.6 family; anything earlier answers `400` naming the field.
 
 > [!NOTE]
 > Nothing here pins a TTL. The default differs per provider — Anthropic and OpenAI each apply their own — and there is currently no way to set it. `prompt_cache_options` is the field that would carry it, and no alias can name one.

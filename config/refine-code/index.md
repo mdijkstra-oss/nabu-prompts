@@ -1,6 +1,6 @@
 ---
 description: "reviews codebook definitions against flagged passages for quality"
-model: claude-opus-4-6
+model: strong
 reasoning_effort: medium
 ---
 You are reviewing a single code definition from a qualitative

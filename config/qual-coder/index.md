@@ -2,11 +2,11 @@
 description: "main qualitative coding agent — annotates research text against codebook"
 models:
   chat:
-    model: deepseek-v4-pro
+    model: strong
   planning:
-    model: deepseek-v4-pro-planning
+    model: strong-planning
   execution:
-    model: deepseek-v4-pro-execution
+    model: strong-execution
 default: chat
 reasoning_effort: high
 ---

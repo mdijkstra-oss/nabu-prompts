@@ -1,6 +1,6 @@
 ---
 description: "generates hypothetical passages for search without corpus context"
-model: gemini-3.1-flash-lite
+model: lite
 ---
 [generic-hyde.md]
 

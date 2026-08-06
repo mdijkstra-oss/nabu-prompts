@@ -1,0 +1,31 @@
+# Every tier on GEMINI_API_KEY alone — for easy development; consensus within one provider is moot.
+models:
+  # corpus-describer, file-hyde, generic-hyde, hyde-generator, section-labeler, topic-assigner
+  lite:
+    model: gemini/gemini-3.5-flash-lite
+    reasoning_effort: minimal
+
+  # scout-filter
+  mid:
+    model: gemini/gemini-3.6-flash
+    reasoning_effort: minimal
+
+  # qual-coder, semantic-filter, refine-code — same model as mid, Gemini's Pro line is preview-only.
+  strong:
+    model: gemini/gemini-3.6-flash
+    reasoning_effort: medium
+
+  # An alias prompt resolves against shared/ and goes in front of the agent's own.
+  strong-planning:
+    extends: strong
+    prompt: nabu/modes/planning.md
+  strong-execution:
+    extends: strong
+    prompt: nabu/modes/execution.md
+
+  # deep-analysis-adjudicate and both filter voters — same model as strong.
+  expert:
+    model: gemini/gemini-3.6-flash
+    reasoning_effort: low
+    # Unverified whether Gemini accepts the frontend's explicit cache breakpoints.
+    prompt_cache_breakpoints: false

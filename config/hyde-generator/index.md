@@ -1,6 +1,6 @@
 ---
 description: "generates hypothetical passages for corpus-specific semantic search (HyDE)"
-model: gemini-2.5-flash-lite
+model: lite
 ---
 [hyde-generator.md]
 

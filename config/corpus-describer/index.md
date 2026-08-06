@@ -1,5 +1,5 @@
 ---
 description: "profiles document groups for downstream hyde-generator context"
-model: gemini-3.1-flash-lite
+model: lite
 ---
 [corpus-describer.md]

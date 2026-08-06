@@ -1,6 +1,6 @@
 ---
 description: "generates highlight and hypothetical passages from a file for similarity search"
-model: gemini-3.1-flash-lite
+model: lite
 ---
 [file-hyde.md]
 

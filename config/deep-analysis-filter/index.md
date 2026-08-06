@@ -2,10 +2,10 @@
 description: "step 2: independent review — keep/remove judgment per code"
 models:
   openai:
-    model: gpt-5.6
+    model: expert
     reasoning_effort: low
   anthropic:
-    model: claude-opus-5
+    model: expert
     reasoning_effort: low
 default: openai
 ---
