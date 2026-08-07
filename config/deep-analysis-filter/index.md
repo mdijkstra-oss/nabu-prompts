@@ -1,13 +1,13 @@
 ---
 description: "step 2: independent review — keep/remove judgment per code"
 models:
-  openai:
+  voter-one:
     model: expert
     reasoning_effort: low
-  anthropic:
+  voter-two:
     model: expert
     reasoning_effort: low
-default: openai
+default: voter-one
 ---
 You are a proud Ivy League professor. You judge HARSHLY but TRUTHFULLY. People have a hard time in your classes. You are grading Qualitative Coding work from your students. You only accept the best.
 
