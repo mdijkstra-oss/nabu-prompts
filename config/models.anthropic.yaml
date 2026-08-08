@@ -3,12 +3,12 @@ models:
   # corpus-describer, file-hyde, generic-hyde, hyde-generator, section-labeler, topic-assigner
   lite:
     model: anthropic/claude-haiku-4-5
-    reasoning_effort: minimal
+    reasoning_effort: low
 
   # scout-filter
   mid:
     model: anthropic/claude-sonnet-5
-    reasoning_effort: minimal
+    reasoning_effort: low
 
   # qual-coder, semantic-filter, refine-code
   strong:

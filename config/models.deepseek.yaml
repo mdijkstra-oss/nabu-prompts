@@ -3,12 +3,12 @@ models:
   # corpus-describer, file-hyde, generic-hyde, hyde-generator, section-labeler, topic-assigner
   lite:
     model: deepseek/deepseek-v4-flash
-    reasoning_effort: minimal
+    reasoning_effort: low
 
   # scout-filter — same model as lite, DeepSeek publishes two.
   mid:
     model: deepseek/deepseek-v4-flash
-    reasoning_effort: minimal
+    reasoning_effort: low
 
   # qual-coder, semantic-filter, refine-code
   strong:

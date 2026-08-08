@@ -3,12 +3,12 @@ models:
   # corpus-describer, file-hyde, generic-hyde, hyde-generator, section-labeler, topic-assigner
   lite:
     model: openai/gpt-5.6-luna
-    reasoning_effort: minimal
+    reasoning_effort: none
 
   # scout-filter
   mid:
     model: openai/gpt-5.6-terra
-    reasoning_effort: minimal
+    reasoning_effort: none
     verbosity: low
     reasoning_summary: concise
 
