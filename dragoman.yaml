@@ -1,5 +1,9 @@
-# Replaces dragoman's embedded table wholesale. `auth` names the environment
-# variable holding a key, never a key.
+# `auth` names the environment variable holding a key, never a key.
+
+# Without this the services below join dragoman's embedded table rather than
+# standing for all of it, and a models.yaml alias could name a prefix this file
+# never listed.
+mode: override
 
 openai:
   endpoint: https://api.openai.com/v1
