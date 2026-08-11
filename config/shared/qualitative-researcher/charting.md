@@ -37,7 +37,7 @@ Every column a spec template references must exist in the query result. The vali
 <types>
 Nine chart types, three shape families:
 
-**Axis** — `bar`, `stacked-bar`, `grouped-bar`, `line`, `area`, `scatter`. Has `x`, `y`, optional `series` (for stacks / multi-lines / groups), optional `orientation`.
+**Axis** — `bar`, `stacked-bar`, `grouped-bar`, `line`, `area`, `scatter`. Has `x`, `y`, optional `series` (for stacks / multi-lines / groups), optional `orientation`. An `area` with a `series` stacks, so its top edge is the total.
 
 **Part** — `pie`, `treemap`. Has `label`, `value`, optional `parent` (treemap only).
 
@@ -46,7 +46,7 @@ Nine chart types, three shape families:
 Pick the type from the question, not the data:
 - Compare categories → `bar`
 - Compose a whole from parts → `pie` (few parts) or `treemap` (many or hierarchical)
-- Trend over time → `line` or `area`
+- Trend over time → `line`, or `area` when the total across series matters as much as the parts
 - Two numeric dimensions → `scatter`
 - Two categorical breakdowns of one measure → `stacked-bar` (composition) or `grouped-bar` (side-by-side)
 </types>
@@ -104,8 +104,27 @@ The `VALUES` list is a lookup table rather than a computed value, which is why i
 
 Values in a color column are Radix tokens or `#rrggbb` hex. A value that is neither is read as an entity ID, and a value matching no entity renders grey.
 
-Bar, stacked-bar, and grouped-bar charts with a `series` field color by series. Pie and treemap color by slice. Line and area color by line. Scatter colors by point. A token literal paints every series the same, so a chart with a `series` field needs form 1, 2 or 4.
+Bar, stacked-bar, and grouped-bar charts with a `series` field color by series. Pie and treemap color by slice. Line colors by line, area by band. Scatter colors by point. A token literal paints every series the same, so a chart with a `series` field needs form 1, 2 or 4.
 </colors>
+
+<bands>
+Axis charts take an optional `bands` array: shaded x-axis regions marking context the corpus does not carry. A band is `{ from, to, label? }`, where `from` and `to` are x-axis values exactly as the query returns them.
+
+```json
+{
+  "type": "stacked-bar",
+  "x": "month",
+  "y": "count",
+  "series": "code",
+  "color": "{code:color}",
+  "bands": [{ "from": "1912-04", "to": "1912-08", "label": "Polar night" }]
+}
+```
+
+On a category axis the edges snap to whole categories — a band from `1912-04` covers all of April, never part of it. A `from` or `to` that matches no value in the result is dropped silently, so band edges must come from the same column the x binding names.
+
+Use a band for a period the reader needs in order to read the chart and that no column carries: a season, a policy in force, the weeks a site was closed. Do not use one to highlight a finding — that is what the caption and the surrounding prose are for.
+</bands>
 
 <tooltip>
 The `tooltip` field is an optional template string. Add it when the axis labels can't show the whole story — counts, percentages, derived metrics. Don't repeat what's already on the axis.
@@ -166,9 +185,15 @@ Line (multi-line via `series`):
 }
 ```
 
-Area:
+Area (stacked via `series`, one band per code):
 ```json
-{ "type": "area", "x": "date", "y": "cumulative", "color": "blue" }
+{
+  "type": "area",
+  "x": "month",
+  "y": "count",
+  "series": "code",
+  "color": "{code:color}"
+}
 ```
 
 Scatter:
