@@ -14,17 +14,17 @@ Chart queries return raw data — the renderer handles all presentation.
 
 - **No `CASE` expressions.** If you need grouping, use tags or code hierarchies that exist in the data. If you need display labels, the renderer resolves them from entity properties.
 - **No string functions on output columns.** No `REPLACE`, `UPPER`, `INITCAP`, `CONCAT`, `||`, `SUBSTR`. Columns must return values exactly as stored in the database.
-- **No constructing color values in SQL.** Never use `CASE` or string expressions to build a color column. If the data already carries a color column, reference it. Otherwise use entity color templates (`{field:color}`) or a Radix token literal in the spec.
+- **No constructing color values in SQL.** Never use `CASE`, `IF()` or string expressions to build a color. A color is either already in the data — an entity's own color, or a color column the query carries — or it comes from a `VALUES` list joined in as a lookup table. See the colors section below.
 
 ```sql
-SELECT code, COUNT(*) AS count FROM attributes_annotations GROUP BY code
+SELECT code, COUNT(*) AS count FROM annotations GROUP BY code
 ```
 
 Codes are grouped by the file they're defined in. To aggregate by code group, join to `callouts` and group by its `file` column:
 
 ```sql
 SELECT c.file AS code_group, COUNT(*) AS count
-FROM attributes_annotations a
+FROM annotations a
 JOIN callouts c ON a.code = c.id
 GROUP BY c.file
 ```
@@ -81,15 +81,30 @@ Use `{field:color}` when you want a visual channel to match an entity's own colo
 </templates>
 
 <colors>
-Color is required. Exactly three forms — no defaults, no fallbacks:
+Color is required. Four forms, in the order to reach for them:
 
-1. **Radix token literal** — a single token name like `"blue"`, `"red"`, `"amber"`. Use when the whole chart is one color.
-2. **Column template** — `"{color_column}"` where `color_column` holds Radix tokens or hex values. Use when the query already carries a color column.
-3. **Entity color template** — `"{field:color}"` where `field` holds entity IDs. The renderer reads the entity's own color. Use this for codes, callouts, annotations — their colors should follow the document.
+1. **Entity color template** — `"{field:color}"` where `field` holds entity IDs. The renderer reads the entity's own color. Use this whenever the chart is about codes, callouts or tags: their colors follow the document, so recoloring a code in the codebook recolors every chart it appears in.
+2. **Column template** — `"{color_column}"` where the column already holds Radix tokens or hex values. Use when the data carries its own color.
+3. **Radix token literal** — a single token like `"blue"`. Use when the whole chart is one color: a single-series bar, one line, one area.
+4. **A color map joined into the query.** Use when the categories are not entities and carry no color of their own, or when the user names the colors they want. Join a `VALUES` list as a lookup table and select its color column:
 
-If the data has no entity colors, use a Radix token literal in the spec.
+```sql
+SELECT a.type, count(*) AS count, m.color
+FROM attributes a
+JOIN (VALUES ('interview', 'teal'), ('report', 'amber'), ('memo', 'plum')) AS m(type, color)
+  ON m.type = a.type
+GROUP BY 1, 3
+```
 
-Bar, stacked-bar, and grouped-bar charts with a `series` field color by series. Pie and treemap color by slice. Line and area color by line. Scatter colors by point.
+```json
+{ "type": "bar", "x": "type", "y": "count", "color": "{color}" }
+```
+
+The `VALUES` list is a lookup table rather than a computed value, which is why it is allowed where `CASE` is not. Every category the query returns needs a row in it, or the join drops that category from the chart.
+
+Values in a color column are Radix tokens or `#rrggbb` hex. A value that is neither is read as an entity ID, and a value matching no entity renders grey.
+
+Bar, stacked-bar, and grouped-bar charts with a `series` field color by series. Pie and treemap color by slice. Line and area color by line. Scatter colors by point. A token literal paints every series the same, so a chart with a `series` field needs form 1, 2 or 4.
 </colors>
 
 <tooltip>

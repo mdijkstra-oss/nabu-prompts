@@ -105,10 +105,10 @@ FROM files
 WHERE files.file IN (SELECT DISTINCT attributes.file FROM attributes WHERE list_has(attributes.tags, 'environmental'))
 
 -- Keyword match
-SELECT attributes_annotations.file, attributes_annotations.id, attributes_annotations.text FROM attributes_annotations WHERE attributes_annotations.text ILIKE '%asbestos%'
+SELECT annotations.file, annotations.id, annotations.text FROM annotations WHERE annotations.text ILIKE '%asbestos%'
 
 -- Entity by code
-SELECT attributes_annotations.file, attributes_annotations.id FROM attributes_annotations WHERE attributes_annotations.code = 'callout-abc123'
+SELECT annotations.file, annotations.id FROM annotations WHERE annotations.code = 'callout-3kf9m2qp'
 
 -- Codebook codes
 SELECT callouts.file, callouts.id, callouts.title FROM callouts WHERE callouts.type = 'codebook-code'
@@ -117,7 +117,7 @@ SELECT callouts.file, callouts.id, callouts.title FROM callouts WHERE callouts.t
 SELECT DISTINCT unnest(attributes.tags) AS tag, attributes.file FROM attributes
 
 -- Annotations on a file
-SELECT attributes.annotations, attributes.file FROM attributes WHERE attributes.file = 'doc.md'
+SELECT annotations.file, annotations.id, annotations.text FROM annotations WHERE annotations.file = 'doc.md'
 ```
 
 ### Page size and pagination
