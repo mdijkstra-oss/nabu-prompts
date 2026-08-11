@@ -45,7 +45,7 @@ A prompt's frontmatter names a tier, never a model, so one `config/models.*.yaml
 
 | tier | prompts |
 |---|---|
-| `lite` | corpus-describer, file-hyde, generic-hyde, hyde-generator, section-labeler, topic-assigner |
+| `lite` | corpus-describer, file-hyde, generic-hyde, hyde-generator, topic-assigner |
 | `mid` | scout-filter |
 | `strong` | qual-coder, semantic-filter, refine-code |
 | `expert` | deep-analysis-filter, deep-analysis-adjudicate |
@@ -83,7 +83,6 @@ Two tiers exist only to carry a prompt. `strong-planning` and `strong-execution`
 | [`/qual-coder`](config/qual-coder/index.md) | the main coding agent — annotates research text against a codebook; `.planning` and `.execution` add a mode overlay |
 | [`/refine-code`](config/refine-code/index.md) | reviews a codebook definition against the passages flagged against it |
 | [`/scout-filter`](config/scout-filter/index.md) | finds contiguous off-topic blocks to exclude from a document |
-| [`/section-labeler`](config/section-labeler/index.md) | gives each document section a label and description |
 | [`/semantic-filter`](config/semantic-filter/index.md) | picks the sentences matching a search intent |
 | [`/topic-assigner`](config/topic-assigner/index.md) | classifies a document by type and subject |
 

@@ -1,6 +1,6 @@
 # Every tier on OPENAI_API_KEY alone — for easy development; consensus within one provider is moot.
 models:
-  # corpus-describer, file-hyde, generic-hyde, hyde-generator, section-labeler, topic-assigner
+  # corpus-describer, file-hyde, generic-hyde, hyde-generator, topic-assigner
   lite:
     model: openai/gpt-5.6-luna
     reasoning_effort: none
