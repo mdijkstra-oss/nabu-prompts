@@ -13,13 +13,14 @@ cp .env.example .env
 docker compose up
 ```
 
-Every tier ships pointing at OpenAI, so `OPENAI_API_KEY` alone runs all twelve prompts.
+Every tier defaults to OpenAI, so `OPENAI_API_KEY` alone runs all twelve prompts.
 
 `.env` holds:
 
 | variable | default | sets |
 |---|---|---|
 | `OPENAI_API_KEY` `ANTHROPIC_API_KEY` `GEMINI_API_KEY` `DEEPSEEK_API_KEY` | empty | one per provider your tier file names |
+| `MODELS` | `models.openai.yaml` | which models yaml the tiers resolve against; a bare name is read from `config/`, an absolute path from anywhere |
 | `CHANCERY_PORT` | `8081` | host port the routes are published on |
 | `CORS_ORIGINS` | `http://localhost:5173` | comma-separated origins a browser may call from; empty denies every cross-origin request |
 | `LOG_REQUEST_HEADERS` | `X-Session-ID,X-Project-ID` | caller headers to log and pass on as identity |
@@ -40,7 +41,7 @@ curl -X POST localhost:8081/topic-assigner \
 
 ## Picking a provider
 
-A prompt's frontmatter names a tier, never a model, so `config/models.yaml` decides what the whole set runs on:
+A prompt's frontmatter names a tier, never a model, so one `config/models.*.yaml` decides what the whole set runs on:
 
 | tier | prompts |
 |---|---|
@@ -49,12 +50,13 @@ A prompt's frontmatter names a tier, never a model, so `config/models.yaml` deci
 | `strong` | qual-coder, semantic-filter, refine-code |
 | `expert` | deep-analysis-filter, deep-analysis-adjudicate |
 
-`models.yaml` ships as a copy of `models.openai.yaml`. Copy another over it to switch, then restart the container that reads it:
+`MODELS` in `.env` names which one, and defaults to `models.openai.yaml`. Switching is a restart, not an edit:
 
 ```sh
-cp config/models.anthropic.yaml config/models.yaml
-docker compose restart chancery
+MODELS=models.anthropic.yaml docker compose up -d chancery
 ```
+
+An absolute path reads a table from anywhere, so a working copy of your own needs no file in `config/`.
 
 | file | keys |
 |---|---|

@@ -37,6 +37,7 @@ services:
       LOG_REQUEST_HEADERS: ${LOG_REQUEST_HEADERS:-X-Session-ID,X-Project-ID}
     volumes:
       - ./config:/config:ro
+    command: ["serve", "--models", "${MODELS:-models.openai.yaml}"]
     # depends_on alone waits for start, not for listening.
     depends_on:
       dragoman:
