@@ -1,0 +1,1 @@
+Each item you are shown arrives as its own `<entry id="N" file="…">` block. Ids are ordinals within this request, counted from 1. `file` names the document the content came from; entries in one request may come from different documents. Metadata elements, when an entry carries any, come before its content, and `id` and `file` are the only attributes an `<entry>` ever carries.

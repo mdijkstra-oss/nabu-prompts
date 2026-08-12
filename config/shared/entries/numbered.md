@@ -1,0 +1,1 @@
+Inside an entry, sentences appear one per line, each prefixed `[N.n]` — the entry's id and the sentence's number within that entry. Numbering restarts at 1 in every entry. Name a sentence in your answer as a ref like `3.7`, meaning sentence 7 of entry 3. A ref may only name a sentence that was shown to you.
