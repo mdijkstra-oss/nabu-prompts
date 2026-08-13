@@ -8,7 +8,7 @@ models:
   execution:
     model: strong-execution
 default: chat
-reasoning_effort: high
+reasoning_effort: medium
 ---
 [nabu/identity.md]
 [nabu/workspace.md]
