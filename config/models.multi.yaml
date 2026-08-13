@@ -1,11 +1,11 @@
 # Agents name tiers, never models. Swap this file for a models.<provider>.yaml to run on one key.
 models:
-  # corpus-describer, file-hyde, generic-hyde, hyde-generator, region-finder, topic-assigner
+  # corpus-describer, file-hyde, generic-hyde, hyde-generator, topic-assigner
   lite:
     model: gemini/gemini-3.5-flash-lite
     reasoning_effort: minimal
 
-  # region-marker
+  # region-marker, region-finder
   mid:
     model: deepseek/deepseek-v4-flash
     reasoning_effort: none

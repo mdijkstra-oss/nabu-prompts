@@ -1,11 +1,11 @@
 # Every tier on OPENAI_API_KEY alone — for easy development; consensus within one provider is moot.
 models:
-  # corpus-describer, file-hyde, generic-hyde, hyde-generator, region-finder, topic-assigner
+  # corpus-describer, file-hyde, generic-hyde, hyde-generator, topic-assigner
   lite:
     model: openai/gpt-5.6-luna
     reasoning_effort: none
 
-  # region-marker
+  # region-marker, region-finder
   mid:
     model: openai/gpt-5.6-terra
     reasoning_effort: none

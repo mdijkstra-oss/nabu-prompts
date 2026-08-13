@@ -1,11 +1,11 @@
 # Every tier on GEMINI_API_KEY alone — for easy development; consensus within one provider is moot.
 models:
-  # corpus-describer, file-hyde, generic-hyde, hyde-generator, region-finder, topic-assigner
+  # corpus-describer, file-hyde, generic-hyde, hyde-generator, topic-assigner
   lite:
     model: gemini/gemini-3.5-flash-lite
     reasoning_effort: minimal
 
-  # region-marker
+  # region-marker, region-finder
   mid:
     model: gemini/gemini-3.6-flash
     reasoning_effort: minimal

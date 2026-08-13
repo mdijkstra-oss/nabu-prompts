@@ -1,11 +1,11 @@
 # Every tier on ANTHROPIC_API_KEY alone — for easy development; consensus within one provider is moot.
 models:
-  # corpus-describer, file-hyde, generic-hyde, hyde-generator, region-finder, topic-assigner
+  # corpus-describer, file-hyde, generic-hyde, hyde-generator, topic-assigner
   lite:
     model: anthropic/claude-haiku-4-5
     reasoning_effort: low
 
-  # region-marker
+  # region-marker, region-finder
   mid:
     model: anthropic/claude-sonnet-5
     reasoning_effort: low
