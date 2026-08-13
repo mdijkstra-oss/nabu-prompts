@@ -1,16 +1,16 @@
 # Every tier on ANTHROPIC_API_KEY alone — for easy development; consensus within one provider is moot.
 models:
-  # corpus-describer, file-hyde, generic-hyde, hyde-generator, topic-assigner
+  # corpus-describer, file-hyde, generic-hyde, hyde-generator, region-finder, topic-assigner
   lite:
     model: anthropic/claude-haiku-4-5
     reasoning_effort: low
 
-  # scout-filter
+  # region-marker, scout-filter
   mid:
     model: anthropic/claude-sonnet-5
     reasoning_effort: low
 
-  # qual-coder, semantic-filter, refine-code
+  # qual-coder, semantic-filter
   strong:
     model: anthropic/claude-opus-5
     reasoning_effort: medium
@@ -23,7 +23,15 @@ models:
     extends: strong
     prompt: nabu/modes/execution.md
 
-  # deep-analysis-adjudicate and both deep-analysis-filter voters.
+  # deep-analysis-adjudicate and refine-code.
   expert:
-    model: anthropic/claude-fable-5
+    model: anthropic/claude-opus-5
+    reasoning_effort: medium
+
+  # deep-analysis-filter voters.
+  voter-one:
+    model: anthropic/claude-sonnet-5
+    reasoning_effort: low
+  voter-two:
+    model: anthropic/claude-sonnet-5
     reasoning_effort: low

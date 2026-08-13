@@ -1,18 +1,18 @@
 # Every tier on OPENAI_API_KEY alone — for easy development; consensus within one provider is moot.
 models:
-  # corpus-describer, file-hyde, generic-hyde, hyde-generator, topic-assigner
+  # corpus-describer, file-hyde, generic-hyde, hyde-generator, region-finder, topic-assigner
   lite:
     model: openai/gpt-5.6-luna
     reasoning_effort: none
 
-  # scout-filter
+  # region-marker, scout-filter
   mid:
     model: openai/gpt-5.6-terra
     reasoning_effort: none
     verbosity: low
     reasoning_summary: concise
 
-  # qual-coder, semantic-filter, refine-code
+  # qual-coder, semantic-filter
   strong:
     model: openai/gpt-5.6-sol
     reasoning_effort: medium
@@ -27,9 +27,21 @@ models:
     extends: strong
     prompt: nabu/modes/execution.md
 
-  # deep-analysis-adjudicate and both filter voters — same model as strong, Sol tops the line.
+  # deep-analysis-adjudicate and refine-code — same model as strong, Sol tops the line.
   expert:
     model: openai/gpt-5.6-sol
+    reasoning_effort: low
+    verbosity: low
+    reasoning_summary: concise
+
+  # deep-analysis-filter voters.
+  voter-one:
+    model: openai/gpt-5.6-terra
+    reasoning_effort: low
+    verbosity: low
+    reasoning_summary: concise
+  voter-two:
+    model: openai/gpt-5.6-terra
     reasoning_effort: low
     verbosity: low
     reasoning_summary: concise

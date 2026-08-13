@@ -1,6 +1,6 @@
 ---
 description: "reviews codebook definitions against flagged passages for quality"
-model: strong
+model: expert
 reasoning_effort: medium
 ---
 You are reviewing a single code definition from a qualitative

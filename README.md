@@ -50,13 +50,9 @@ A prompt's frontmatter names a tier, never a model, so one `config/models.*.yaml
 | `strong` | qual-coder, semantic-filter, refine-code |
 | `expert` | deep-analysis-filter, deep-analysis-adjudicate |
 
-`MODELS` in `.env` names which one, and defaults to `models.openai.yaml`. Switching is a restart, not an edit:
-
 ```sh
 MODELS=models.anthropic.yaml docker compose up -d chancery
 ```
-
-An absolute path reads a table from anywhere, so a working copy of your own needs no file in `config/`.
 
 | file | keys |
 |---|---|
@@ -67,8 +63,6 @@ An absolute path reads a table from anywhere, so a working copy of your own need
 | `models.multi.yaml` | `GEMINI_API_KEY`, `ANTHROPIC_API_KEY` |
 
 Only `models.multi.yaml` spreads the tiers across providers. Each of the others runs everything on one key, which makes both `deep-analysis-filter` voters the same model voting against itself — fine for development, not for research output.
-
-Two tiers exist only to carry a prompt. `strong-planning` and `strong-execution` extend `strong` with a file from `config/shared/nabu/modes/`, which chancery puts in front of the agent's own prompt. Editing those two files is how the `qual-coder` modes change.
 
 ## Routes
 

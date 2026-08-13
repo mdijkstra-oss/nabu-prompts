@@ -2,10 +2,10 @@
 description: "step 2: independent review — keep/remove judgment per code"
 models:
   voter-one:
-    model: expert
+    model: voter-one
     reasoning_effort: low
   voter-two:
-    model: expert
+    model: voter-two
     reasoning_effort: low
 default: voter-one
 ---

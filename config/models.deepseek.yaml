@@ -1,16 +1,16 @@
 # Every tier on DEEPSEEK_API_KEY alone — for easy development; consensus within one provider is moot.
 models:
-  # corpus-describer, file-hyde, generic-hyde, hyde-generator, topic-assigner
+  # corpus-describer, file-hyde, generic-hyde, hyde-generator, region-finder, topic-assigner
   lite:
     model: deepseek/deepseek-v4-flash
     reasoning_effort: low
 
-  # scout-filter — same model as lite, DeepSeek publishes two.
+  # region-marker, scout-filter — same model as lite, DeepSeek publishes two.
   mid:
     model: deepseek/deepseek-v4-flash
     reasoning_effort: low
 
-  # qual-coder, semantic-filter, refine-code
+  # qual-coder, semantic-filter
   strong:
     model: deepseek/deepseek-v4-pro
     reasoning_effort: medium
@@ -23,9 +23,15 @@ models:
     extends: strong
     prompt: nabu/modes/execution.md
 
-  # deep-analysis-adjudicate and both filter voters — same model as strong.
+  # deep-analysis-adjudicate and refine-code — same model as strong.
   expert:
     model: deepseek/deepseek-v4-pro
     reasoning_effort: low
     # Unverified whether DeepSeek accepts the frontend's explicit cache breakpoints.
     prompt_cache_breakpoints: false
+
+  # deep-analysis-filter voters.
+  voter-one:
+    extends: expert
+  voter-two:
+    extends: expert
