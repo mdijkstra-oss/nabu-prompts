@@ -5,7 +5,7 @@ models:
     model: gemini/gemini-3.5-flash-lite
     reasoning_effort: minimal
 
-  # region-marker, region-finder
+  # region-marker
   mid:
     model: gemini/gemini-3.6-flash
     reasoning_effort: minimal
@@ -22,6 +22,12 @@ models:
   strong-instant:
     extends: strong
     reasoning_effort: minimal
+
+  # region-finder — occurrence finding follows exclusion rules; it needs a
+  # competent model at low effort.
+  finder:
+    model: gemini/gemini-3.6-flash
+    reasoning_effort: low
 
   # An alias prompt resolves against shared/ and goes in front of the agent's own.
   strong-planning:

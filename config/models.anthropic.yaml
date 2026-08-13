@@ -5,7 +5,7 @@ models:
     model: anthropic/claude-haiku-4-5
     reasoning_effort: low
 
-  # region-marker, region-finder
+  # region-marker
   mid:
     model: anthropic/claude-sonnet-5
     reasoning_effort: low
@@ -22,6 +22,12 @@ models:
     reasoning_effort: low
   strong-instant:
     extends: strong
+    reasoning_effort: low
+
+  # region-finder — occurrence finding follows exclusion rules; it needs a
+  # competent model at low effort.
+  finder:
+    model: anthropic/claude-sonnet-5
     reasoning_effort: low
 
   # An alias prompt resolves against shared/ and goes in front of the agent's own.

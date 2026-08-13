@@ -5,10 +5,16 @@ models:
     model: gemini/gemini-3.5-flash-lite
     reasoning_effort: minimal
 
-  # region-marker, region-finder
+  # region-marker
   mid:
     model: deepseek/deepseek-v4-flash
     reasoning_effort: none
+
+  # region-finder — occurrence finding follows exclusion rules; every cheaper
+  # setting tested either drops whole files or marks roll calls.
+  finder:
+    model: gemini/gemini-3.6-flash
+    reasoning_effort: low
 
   # qual-coder
   strong:

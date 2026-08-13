@@ -5,7 +5,7 @@ models:
     model: openai/gpt-5.6-luna
     reasoning_effort: none
 
-  # region-marker, region-finder
+  # region-marker
   mid:
     model: openai/gpt-5.6-terra
     reasoning_effort: none
@@ -26,6 +26,12 @@ models:
   strong-instant:
     extends: strong
     reasoning_effort: none
+
+  # region-finder — occurrence finding follows exclusion rules; it needs a
+  # competent model at low effort.
+  finder:
+    model: openai/gpt-5.6-terra
+    reasoning_effort: low
 
   # An alias prompt resolves against shared/ and goes in front of the agent's own.
   strong-planning:
