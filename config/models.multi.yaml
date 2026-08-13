@@ -5,15 +5,23 @@ models:
     model: gemini/gemini-3.5-flash-lite
     reasoning_effort: minimal
 
-  # region-marker, scout-filter
+  # region-marker
   mid:
     model: deepseek/deepseek-v4-flash
     reasoning_effort: none
 
-  # qual-coder, semantic-filter
+  # qual-coder
   strong:
     model: gemini/gemini-3.6-flash
     reasoning_effort: low
+
+  # scout-filter and semantic-filter run their tier's model at its thinking floor.
+  mid-instant:
+    extends: mid
+    reasoning_effort: none
+  strong-instant:
+    extends: strong
+    reasoning_effort: minimal
 
   # An alias prompt resolves against shared/ and goes in front of the agent's own.
   strong-planning:

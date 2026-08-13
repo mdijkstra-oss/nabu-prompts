@@ -5,15 +5,24 @@ models:
     model: anthropic/claude-haiku-4-5
     reasoning_effort: low
 
-  # region-marker, scout-filter
+  # region-marker
   mid:
     model: anthropic/claude-sonnet-5
     reasoning_effort: low
 
-  # qual-coder, semantic-filter
+  # qual-coder
   strong:
     model: anthropic/claude-opus-5
     reasoning_effort: medium
+
+  # scout-filter and semantic-filter run their tier's model at its thinking floor,
+  # which for Claude is low.
+  mid-instant:
+    extends: mid
+    reasoning_effort: low
+  strong-instant:
+    extends: strong
+    reasoning_effort: low
 
   # An alias prompt resolves against shared/ and goes in front of the agent's own.
   strong-planning:

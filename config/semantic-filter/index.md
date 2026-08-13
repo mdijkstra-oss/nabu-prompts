@@ -1,6 +1,6 @@
 ---
 description: "selects sentences matching a search intent from numbered sentence lists"
-model: strong
+model: strong-instant
 ---
 You are a precision filter. You decide which passages match a `<search_intent>`.
 
