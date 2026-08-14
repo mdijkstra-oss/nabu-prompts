@@ -1,9 +1,11 @@
 <charting>
 # Charts
 
-Charts are `json-chart` blocks that render a SQL query as a Recharts visualization. Create one only when the user asks for a visualization — never insert charts unprompted.
+Charts are `json-chart` blocks that render a SQL query as a visualization. Create one only when the user asks for a visualization — never insert charts unprompted.
 
 A chart has four fields: `id`, `caption: { label }`, `query`, and `spec`. The spec is declarative — it maps SQL columns onto visual channels. The renderer handles layout, legends, tooltips, and entity resolution.
+
+The constraints in this file are the same ones the app enforces: `app/lib/sql/reject.ts` and `app/domain/data-blocks/chart/validate.ts` in the frontend repository reject what this file forbids, in the same terms.
 
 <query>
 The `query` field is SQL against the same tables the `query` tool uses.
@@ -14,7 +16,8 @@ Chart queries return raw data — the renderer handles all presentation.
 
 - **No `CASE` expressions.** If you need grouping, use tags or code hierarchies that exist in the data. If you need display labels, the renderer resolves them from entity properties.
 - **No string functions on output columns.** No `REPLACE`, `UPPER`, `INITCAP`, `CONCAT`, `||`, `SUBSTR`. Columns must return values exactly as stored in the database.
-- **No constructing color values in SQL.** Never use `CASE`, `IF()` or string expressions to build a color. A color is either already in the data — an entity's own color, or a color column the query carries — or it comes from a `VALUES` list joined in as a lookup table. See the colors section below.
+- **No `SEMANTIC()`.** Semantic search is a search-only function; a chart query re-runs on every render, so a semantic call there can only fail later and worse.
+- **Colors come from the data or a joined lookup, never from SQL expressions** — the rules live in the colors section.
 
 ```sql
 SELECT code, COUNT(*) AS count FROM annotations GROUP BY code
@@ -35,35 +38,110 @@ Every column a spec template references must exist in the query result. The vali
 </query>
 
 <types>
-Nine chart types, three shape families:
+Four chart types:
 
-**Axis** — `bar`, `stacked-bar`, `grouped-bar`, `line`, `area`, `scatter`. Has `x`, `y`, optional `series` (for stacks / multi-lines / groups), optional `orientation`. An `area` with a `series` stacks, so its top edge is the total.
+**`axis`** — one x-axis, one or more drawn layers over it. Every mark that runs along an axis — bars, lines, areas, scatter points — is a layer of an axis chart. See the layers section.
 
-**Part** — `pie`, `treemap`. Has `label`, `value`, optional `parent` (treemap only).
+**`pie` / `treemap`** — a whole composed of parts. Has `label`, `value`.
 
-**Matrix** — `heatmap`. Deferred. The renderer shows a placeholder. Prefer a stacked-bar or scatter until heatmap lands.
+**`heatmap`** — a grid of two categorical dimensions with a value coloring each cell. See the heatmap section.
 
 Pick the type from the question, not the data:
-- Compare categories → `bar`
-- Compose a whole from parts → `pie` (few parts) or `treemap` (many or hierarchical)
-- Trend over time → `line`, or `area` when the total across series matters as much as the parts
-- Two numeric dimensions → `scatter`
-- Two categorical breakdowns of one measure → `stacked-bar` (composition) or `grouped-bar` (side-by-side)
+- Compare categories → `axis` with one bar layer
+- Compose a whole from parts → `pie` (few parts) or `treemap` (many)
+- Trend over time → `axis` with a line layer, or an area layer when the total across series matters as much as the parts
+- Two numeric dimensions → `axis` with a scatter layer
+- Two categorical dimensions of one measure, where the grid of intersections is itself the finding → `heatmap`
+
+Composition versus side-by-side comparison is not a choice of type: both are a bar layer with a `series`, and the `stack` flag decides — see the layers section.
 </types>
+
+<layers>
+An axis spec has chart-level `x`, optional `orientation`, `bands`, and `tooltip`, plus a required `layers` array — minimum one. A plain bar chart is a one-layer chart. Each layer:
+
+- `mark` — `bar`, `line`, `area`, or `scatter`
+- `y` — this layer's measure column
+- `series` — optional category column; the layer splits into one drawn series per distinct value
+- `color` — required; see the colors section
+- `stack` — bar and area layers only, default `false`; the schema rejects it on line and scatter
+- `axis` — `"left"` (default) or `"right"`: which y-axis scales this layer
+
+### Layers versus series
+
+The choice is made in the query before it is made in the spec. Distinct measures → a wide result, one column per measure, one layer per column. Categories in the data → a long result, one value column plus a category column, one layer with `series`.
+
+Wide — two measures, two layers:
+
+```sql
+SELECT c.file AS code_group, COUNT(*) AS annotations, COUNT(DISTINCT a.file) AS documents
+FROM annotations a
+JOIN callouts c ON a.code = c.id
+GROUP BY 1
+```
+
+```json
+{
+  "type": "axis",
+  "x": "code_group",
+  "layers": [
+    { "mark": "bar", "y": "annotations", "color": "blue" },
+    { "mark": "bar", "y": "documents", "color": "teal" }
+  ]
+}
+```
+
+Long — categories arrive as row values, one layer with `series`:
+
+```sql
+SELECT c.file AS code_group, a.code, COUNT(*) AS count
+FROM annotations a
+JOIN callouts c ON a.code = c.id
+GROUP BY 1, 2
+```
+
+```json
+{
+  "type": "axis",
+  "x": "code_group",
+  "layers": [{ "mark": "bar", "y": "count", "series": "code", "color": "{code:color}" }]
+}
+```
+
+### Stacking is always said, never implied
+
+- A bar layer with a `series` draws side-by-side bars by default; `stack: true` stacks the series into one composed bar per x value.
+- Two single-series bar layers, both `stack: true`, stack the two measures into one bar — stacking works on whichever side of the layers-versus-series rule the query landed. Layers stack together when they share the same mark, axis side, and `stack: true`.
+- An `area` layer with a `series` draws overlapping translucent bands by default — it does not stack. Set `stack: true` when the top edge should read as the total.
+
+### Orientation
+
+`orientation` names the direction bars run. `"vertical"` (default): bars rise upward, categories along the horizontal edge. `"horizontal"`: bars run sideways, categories along the vertical edge. The bindings never swap — `x` is always the category binding and each layer's `y` always the measure, whichever way the bars point. The shapes section shows the pair.
+
+### A second layer must earn its place
+
+The canonical combo is a rate drawn as a line over the bars of the counts it is computed from. Give a layer `axis: "right"` only when its unit genuinely differs from the left axis's — a percentage over counts; two count layers share the left axis, or one flattens the other's scale for no reason. Never layer for decoration: a chart that answers the question with one layer gets one layer.
+</layers>
 
 <fields>
 Every field binding is either a column-name shorthand or an object with `field`, optional `label`, optional `format`.
 
 Shorthand when the column name is self-explanatory:
 ```json
-{ "x": "month", "y": "count" }
+{ "type": "axis", "x": "month", "layers": [{ "mark": "bar", "y": "count", "color": "blue" }] }
 ```
 
 Object form when you need a human label or a numeric/date format:
 ```json
 {
+  "type": "axis",
   "x": { "field": "month", "label": "Month", "format": "%b %Y" },
-  "y": { "field": "revenue", "label": "Revenue", "format": "$,.0f" }
+  "layers": [
+    {
+      "mark": "bar",
+      "y": { "field": "revenue", "label": "Revenue", "format": "$,.0f" },
+      "color": "blue"
+    }
+  ]
 }
 ```
 
@@ -75,17 +153,17 @@ Tooltip and color fields use template strings. Three placeholder forms:
 
 - `{field}` — raw column value. If the column holds entity IDs, it renders as a styled pill.
 - `{field:format}` — applies a d3 format to the value (`{revenue:$,.0f}`, `{month:%b %Y}`).
-- `{field:property}` — looks up an entity property on the ID in that column. Properties: `color`, `name`, `label`, `icon`.
+- `{field:property}` — looks up an entity property on the ID in that column. Properties: `color`, `name`, `label`.
 
 Use `{field:color}` when you want a visual channel to match an entity's own color. Use `{field:name}` in a tooltip when you want the entity's display name without the pill styling.
 </templates>
 
 <colors>
-Color is required. Four forms, in the order to reach for them:
+Every layer, pie, and treemap requires a `color`. Four forms, in the order to reach for them:
 
 1. **Entity color template** — `"{field:color}"` where `field` holds entity IDs. The renderer reads the entity's own color. Use this whenever the chart is about codes, callouts or tags: their colors follow the document, so recoloring a code in the codebook recolors every chart it appears in.
 2. **Column template** — `"{color_column}"` where the column already holds Radix tokens or hex values. Use when the data carries its own color.
-3. **Radix token literal** — a single token like `"blue"`. Use when the whole chart is one color: a single-series bar, one line, one area.
+3. **Radix token literal** — a single token like `"blue"`. Use when the whole layer is one color: a single-series bar layer, one line, one area.
 4. **A color map joined into the query.** Use when the categories are not entities and carry no color of their own, or when the user names the colors they want. Join a `VALUES` list as a lookup table and select its color column:
 
 ```sql
@@ -97,14 +175,16 @@ GROUP BY 1, 3
 ```
 
 ```json
-{ "type": "bar", "x": "type", "y": "count", "color": "{color}" }
+{ "type": "axis", "x": "type", "layers": [{ "mark": "bar", "y": "count", "color": "{color}" }] }
 ```
 
 The `VALUES` list is a lookup table rather than a computed value, which is why it is allowed where `CASE` is not. Every category the query returns needs a row in it, or the join drops that category from the chart.
 
 Values in a color column are Radix tokens or `#rrggbb` hex. A value that is neither is read as an entity ID, and a value matching no entity renders grey.
 
-Bar, stacked-bar, and grouped-bar charts with a `series` field color by series. Pie and treemap color by slice. Line colors by line, area by band. Scatter colors by point. A token literal paints every series the same, so a chart with a `series` field needs form 1, 2 or 4.
+A layer with a `series` colors by series; pie and treemap color by slice; a scatter layer colors by point. A token literal paints every series in the layer the same, so a layer with a `series` needs form 1, 2 or 4.
+
+A heatmap's `color` is different: a single Radix token, and only that — form 3 is the only form. The token seeds the value→shade ramp, mapping each cell's value onto that one scale, so a per-cell template has no meaning there.
 </colors>
 
 <bands>
@@ -112,11 +192,9 @@ Axis charts take an optional `bands` array: shaded x-axis regions marking contex
 
 ```json
 {
-  "type": "stacked-bar",
+  "type": "axis",
   "x": "month",
-  "y": "count",
-  "series": "code",
-  "color": "{code:color}",
+  "layers": [{ "mark": "bar", "y": "count", "series": "code", "stack": true, "color": "{code:color}" }],
   "bands": [{ "from": "1912-04", "to": "1912-08", "label": "Polar night" }]
 }
 ```
@@ -127,7 +205,7 @@ Use a band for a period the reader needs in order to read the chart and that no 
 </bands>
 
 <tooltip>
-The `tooltip` field is an optional template string. Add it when the axis labels can't show the whole story — counts, percentages, derived metrics. Don't repeat what's already on the axis.
+The `tooltip` field is an optional template string at chart level — one tooltip serves every layer. Add it when the axis labels can't show the whole story — counts, percentages, derived metrics. Don't repeat what's already on the axis.
 
 Description tooltip:
 ```
@@ -144,65 +222,131 @@ Computed values belong in the SQL as named columns. The tooltip just references 
 Markdown: `**bold**`, `*italic*`, `\n` for line breaks, pipe tables for label/value layouts. Entity IDs in placeholders render as pills.
 </tooltip>
 
+<heatmap>
+A heatmap spec has `x`, `y`, `value`, `color`, and optional `tooltip`. Each `(x, y)` pair becomes a cell whose shade follows `value` — the color rules are in the colors section. Select entity `id` columns for both axes, the same rule the query section teaches, so the axis labels render as clickable pills.
+
+Two recipes cover most questions:
+
+**Where does each code land across the corpus** — code × document counts:
+
+```sql
+SELECT a.file AS document, c.id AS code, COUNT(*) AS count
+FROM annotations a
+JOIN callouts c ON a.code = c.id
+GROUP BY 1, 2
+```
+
+```json
+{ "type": "heatmap", "x": "document", "y": "code", "value": "count", "color": "blue" }
+```
+
+**Which codes appear together** — code × code co-occurrence, a self-join of annotations on the document:
+
+```sql
+SELECT a.code AS code_a, b.code AS code_b, COUNT(DISTINCT a.file) AS documents
+FROM annotations a
+JOIN annotations b ON a.file = b.file AND a.code < b.code
+GROUP BY 1, 2
+```
+
+```json
+{ "type": "heatmap", "x": "code_a", "y": "code_b", "value": "documents", "color": "purple" }
+```
+
+The inequality `a.code < b.code` keeps each pair once — without it every pair appears twice, mirrored across the diagonal, and every code co-occurs with itself.
+</heatmap>
+
 <shapes>
-Value shapes by type. These are the spec contents only — the outer `id`, `caption`, `query` fields wrap them.
+Value shapes by picture. These are the spec contents only — the outer `id`, `caption`, `query` fields wrap them.
 
 Bar:
 ```json
-{ "type": "bar", "x": "code", "y": "count", "color": "{code:color}" }
+{ "type": "axis", "x": "code", "layers": [{ "mark": "bar", "y": "count", "color": "{code:color}" }] }
 ```
 
-Stacked bar (series = stack key):
+Horizontal bar — the same spec with one field changed; the bindings do not move:
 ```json
 {
-  "type": "stacked-bar",
-  "x": "month",
-  "y": "count",
-  "series": "code",
-  "color": "{code:color}"
+  "type": "axis",
+  "x": "code",
+  "orientation": "horizontal",
+  "layers": [{ "mark": "bar", "y": "count", "color": "{code:color}" }]
 }
 ```
 
-Grouped bar:
+Stacked bars (series composed into one bar per x value):
 ```json
 {
-  "type": "grouped-bar",
-  "x": "quarter",
-  "y": "revenue",
-  "series": "region",
-  "color": "{region:color}"
+  "type": "axis",
+  "x": "month",
+  "layers": [{ "mark": "bar", "y": "count", "series": "code", "stack": true, "color": "{code:color}" }]
+}
+```
+
+Side-by-side bars (the same spec, `stack` false):
+```json
+{
+  "type": "axis",
+  "x": "month",
+  "layers": [{ "mark": "bar", "y": "count", "series": "code", "stack": false, "color": "{code:color}" }]
+}
+```
+
+Stacked measures (wide result — one stacking layer per measure column):
+```json
+{
+  "type": "axis",
+  "x": "code_group",
+  "layers": [
+    { "mark": "bar", "y": "interviews", "stack": true, "color": "teal" },
+    { "mark": "bar", "y": "reports", "stack": true, "color": "amber" }
+  ]
 }
 ```
 
 Line (multi-line via `series`):
 ```json
 {
-  "type": "line",
+  "type": "axis",
   "x": { "field": "month", "format": "%b %Y" },
-  "y": { "field": "count", "label": "Annotations" },
-  "series": "code",
-  "color": "{code:color}"
+  "layers": [
+    {
+      "mark": "line",
+      "y": { "field": "count", "label": "Annotations" },
+      "series": "code",
+      "color": "{code:color}"
+    }
+  ]
 }
 ```
 
-Area (stacked via `series`, one band per code):
+Area (stacked so the top edge is the total; omit `stack` for overlapping bands):
 ```json
 {
-  "type": "area",
+  "type": "axis",
   "x": "month",
-  "y": "count",
-  "series": "code",
-  "color": "{code:color}"
+  "layers": [{ "mark": "area", "y": "count", "series": "code", "stack": true, "color": "{code:color}" }]
 }
 ```
 
 Scatter:
 ```json
 {
-  "type": "scatter",
+  "type": "axis",
   "x": { "field": "word_count", "label": "Length" },
-  "y": { "field": "sentiment", "format": ".2f" },
-  "color": "{code:color}"
+  "layers": [{ "mark": "scatter", "y": { "field": "sentiment", "format": ".2f" }, "color": "{code:color}" }]
+}
+```
+
+Combo — counts as bars, a rate over them on its own axis:
+```json
+{
+  "type": "axis",
+  "x": "month",
+  "layers": [
+    { "mark": "bar", "y": "annotations", "color": "blue" },
+    { "mark": "line", "y": { "field": "coverage", "format": ".0%" }, "axis": "right", "color": "orange" }
+  ]
 }
 ```
 
@@ -211,26 +355,14 @@ Pie:
 { "type": "pie", "label": "code", "value": "count", "color": "{code:color}" }
 ```
 
-Treemap (hierarchical with parent):
+Treemap (for many parts):
 ```json
-{
-  "type": "treemap",
-  "label": "code",
-  "value": "count",
-  "parent": "code_group",
-  "color": "{code:color}"
-}
+{ "type": "treemap", "label": "code", "value": "count", "color": "{code:color}" }
 ```
 
-Horizontal bar (swap the visual axis, not the fields):
+Heatmap:
 ```json
-{
-  "type": "bar",
-  "x": "count",
-  "y": "code",
-  "orientation": "horizontal",
-  "color": "{code:color}"
-}
+{ "type": "heatmap", "x": "document", "y": "code", "value": "count", "color": "blue" }
 ```
 </shapes>
 </charting>

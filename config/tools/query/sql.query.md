@@ -9,6 +9,8 @@ Every query must SELECT `file` (VARCHAR). Optionally include:
 
 Extra columns are returned but only `file`, `id`, and `text` drive the UI.
 
+All column and table names are snake_case (`chunk_start`, `start_sentence`, `inferred_meta_date_when`). Date-time values are typed columns: TIMESTAMP for instants, DATE for day-precision fields like `attributes.date` — compare them with TIMESTAMP/DATE literals, never with string functions.
+
 ### The `files` table
 
 One row per paragraph-sized chunk. Columns: `file` (source document), `text` (passage content). Only table that supports `SEMANTIC()`.
@@ -41,6 +43,36 @@ Columns like `tags` are `VARCHAR[]`. Use list functions to filter and inspect th
 | `unnest(col)` | SELECT / FROM | Expand to rows | `SELECT unnest(attributes.tags) AS tag FROM attributes` |
 
 `unnest()` expands arrays into rows. It belongs in SELECT or FROM, never in WHERE.
+
+### Time columns
+
+The tables `attributes`, `annotations`, `regions`, `callouts`, and `charts` carry three nullable TIMESTAMP columns inferred from date markers detected in the document text:
+
+- `inferred_meta_date_when` — the single moment this row's text happened, taken from the most specific date marker covering it. Use this for "on/at/during" questions about events.
+- `inferred_meta_date_start` / `inferred_meta_date_end` — the full range of dates touching this row's text, including dates that are merely *mentioned* in it. A row can say "back in 2024" in a document from 2026 — then `start` reaches into 2024 while `when` stays 2026.
+
+On `attributes` the row covers the whole document, so its `start`/`end` is the document's overall time range.
+
+NULL means no date marker covers that text. Speakers are rows in `regions` with `kind = 'speaker'` and the name in `parsed_value`.
+
+```sql
+-- Who spoke on June 2nd?
+SELECT DISTINCT regions.parsed_value, regions.file FROM regions
+WHERE regions.kind = 'speaker'
+  AND regions.inferred_meta_date_when::DATE = DATE '2026-06-02'
+
+-- Documents whose content touches March 2026
+SELECT DISTINCT attributes.file FROM attributes
+WHERE attributes.inferred_meta_date_start <= TIMESTAMP '2026-03-31 23:59:59'
+  AND attributes.inferred_meta_date_end   >= TIMESTAMP '2026-03-01'
+
+-- Annotations on things that happened in a given week
+SELECT annotations.file, annotations.id, annotations.text FROM annotations
+WHERE annotations.inferred_meta_date_when
+      BETWEEN TIMESTAMP '2026-06-01' AND TIMESTAMP '2026-06-08'
+```
+
+For "when did it happen" use `when`, never `start`/`end` — the range is polluted by mentioned dates. For "what period does this text touch" use `start`/`end`.
 
 ### `SEMANTIC()` function
 
