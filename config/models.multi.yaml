@@ -13,12 +13,12 @@ models:
   # region-finder — occurrence finding follows exclusion rules; every cheaper
   # setting tested either drops whole files or marks roll calls.
   finder:
-    model: gemini/gemini-3.6-flash
+    model: gemini/gemini-3.7-flash
     reasoning_effort: low
 
   # qual-coder
   strong:
-    model: gemini/gemini-3.6-flash
+    model: gemini/gemini-3.7-flash
     reasoning_effort: low
 
   # scout-filter and semantic-filter run their tier's model at its thinking floor.
@@ -27,7 +27,7 @@ models:
     reasoning_effort: none
   strong-instant:
     extends: strong
-    reasoning_effort: minimal
+    reasoning_effort: low
 
   # An alias prompt resolves against shared/ and goes in front of the agent's own.
   strong-planning:
