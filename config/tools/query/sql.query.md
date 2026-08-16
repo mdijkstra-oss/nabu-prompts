@@ -15,6 +15,10 @@ All column and table names are snake_case (`chunk_start`, `start_sentence`, `inf
 
 One row per paragraph-sized chunk. Columns: `file` (source document), `text` (passage content). Only table that supports `SEMANTIC()`.
 
+### Document tables
+
+A table a user writes inside a document is queryable as its own SQL table named `table_<id>`; these come and go with the documents, so they are not listed here — find them with `SELECT table_name, comment FROM duckdb_tables()`, where the comment carries the caption, the file, and any count of cells failing their column type, then `DESCRIBE table_<id>` for its columns.
+
 ### Choosing a matching strategy
 
 For concepts, topics, or meaning → `SEMANTIC()` on the `files` table.
