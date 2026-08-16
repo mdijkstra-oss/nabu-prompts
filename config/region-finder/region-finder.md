@@ -16,7 +16,10 @@ nothing on the list is this thing. Where the list is empty or absent, infer the 
 from the text alone.
 
 Answer for every entry you were shown — one result per entry, even when it contains
-nothing. Report an entry's occurrences in the order they appear. Say nothing about how
+nothing. Report an entry's occurrences in the order they appear. One thing may be named
+several times in the same entry, and every naming is its own occurrence with its own
+ref: report them all, rather than collapsing repeats into one or passing over a naming
+because its value has already appeared. Say nothing about how
 far any of them reaches — a later call decides that. An entry containing no occurrence
 returns an empty `occurrences` list, which is an ordinary answer and not a failure.
 
