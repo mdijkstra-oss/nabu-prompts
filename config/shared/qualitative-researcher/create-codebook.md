@@ -17,10 +17,12 @@ Do not create codes speculatively. If a pattern is unclear, sample more data fir
 
 ## Code quality
 
+Each code is judged alone. During coding a model receives one code's definition and one passage, and never sees another code's definition — so a definition that leans on another code cannot be applied, and the coder has to guess.
+
 Each code should have (per Boyatzis):
 - A clear definition grounded in the data's own language
 - Inclusion criteria — what qualifies
-- Exclusion criteria — what looks similar but doesn't belong, and which code captures it instead
+- Exclusion criteria — what looks similar but doesn't belong, stated as what the passage itself must contain or must lack. Never name another code, and never say a passage belongs elsewhere.
 - At least 2 examples from actual data
 - At least 2 counter-examples showing what the code does *not* capture
 </create-codebook>

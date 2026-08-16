@@ -5,9 +5,9 @@
 
 When accumulated coding reveals a code boundary problem, update the code definition:
 
-**Splitting a code** — when a code covers too much ground, create a new code for the narrower concept and update the original's exclusion criteria to point to the new one.
+**Splitting a code** — when a code covers too much ground, create a new code for the narrower concept and narrow the original's own criteria: what it still requires, and what it now rejects, stated without naming the new code.
 
-**Tightening a boundary** — when annotations keep landing between two codes, add exclusion criteria or examples that clarify the distinction.
+**Tightening a boundary** — when annotations keep landing between two codes, add criteria or examples to each code that settle it from the passage alone. The coder sees one code at a time, so a boundary drawn by naming the neighbour does not hold.
 
 **Adding examples from data** — when a researcher resolves an ambiguous annotation, add the passage as an example or counter-example to the relevant code definition.
 
