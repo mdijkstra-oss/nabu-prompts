@@ -13,7 +13,7 @@ cp .env.example .env
 docker compose up
 ```
 
-Every tier defaults to OpenAI, so `OPENAI_API_KEY` alone runs all twelve prompts.
+Every tier defaults to OpenAI, so `OPENAI_API_KEY` alone runs every prompt.
 
 `.env` holds:
 
@@ -41,14 +41,7 @@ curl -X POST localhost:8081/topic-assigner \
 
 ## Picking a provider
 
-A prompt's frontmatter names a tier, never a model, so one `config/models.*.yaml` decides what the whole set runs on:
-
-| tier | prompts |
-|---|---|
-| `lite` | corpus-describer, file-hyde, generic-hyde, hyde-generator, topic-assigner |
-| `mid` | scout-filter |
-| `strong` | qual-coder, semantic-filter, refine-code |
-| `expert` | deep-analysis-filter, deep-analysis-adjudicate |
+A prompt's frontmatter names a tier, never a model, so one `config/models.*.yaml` decides what the whole set runs on. Each of those files defines every tier the prompts ask for, and notes above each one which prompts sit on it.
 
 ```sh
 MODELS=models.anthropic.yaml docker compose up -d chancery
@@ -66,19 +59,9 @@ Only `models.multi.yaml` spreads the tiers across providers. Each of the others 
 
 ## Routes
 
-| route | does |
-|---|---|
-| [`/corpus-describer`](config/corpus-describer/index.md) | profiles a group of documents, giving `hyde-generator` its context |
-| [`/deep-analysis-filter`](config/deep-analysis-filter/index.md) | reviews one coded passage and votes keep or remove — `.voter-one` and `.voter-two` are the two voters |
-| [`/deep-analysis-adjudicate`](config/deep-analysis-adjudicate/index.md) | breaks the tie when the two votes disagree |
-| [`/file-hyde`](config/file-hyde/index.md) | writes hypothetical passages from a file, for similarity search |
-| [`/generic-hyde`](config/generic-hyde/index.md) | writes hypothetical passages with no corpus context |
-| [`/hyde-generator`](config/hyde-generator/index.md) | writes hypothetical passages tuned to a described corpus |
-| [`/qual-coder`](config/qual-coder/index.md) | the main coding agent — annotates research text against a codebook; `.planning` and `.execution` add a mode overlay |
-| [`/refine-code`](config/refine-code/index.md) | reviews a codebook definition against the passages flagged against it |
-| [`/scout-filter`](config/scout-filter/index.md) | finds contiguous off-topic blocks to exclude from a document |
-| [`/semantic-filter`](config/semantic-filter/index.md) | picks the sentences matching a search intent |
-| [`/topic-assigner`](config/topic-assigner/index.md) | classifies a document by type and subject |
+Every directory in [`config/`](config/) is a route under its own name, so `config/qual-coder/index.md` answers `POST /qual-coder`. Its frontmatter says what the prompt does and which tier it runs on. `shared/` and `tools/` are the exceptions: they hold the partials the prompts include, and publish nothing.
+
+A prompt whose frontmatter carries a `models:` map instead of a single `model:` publishes one route per entry, addressed by suffix. `qual-coder` names `chat`, `planning` and `execution`, so `/qual-coder.planning` runs the planning overlay while a bare `/qual-coder` runs whichever entry `default:` names. `deep-analysis-filter` uses the same mechanism to give each of its two voters a route.
 
 ## See also
 
