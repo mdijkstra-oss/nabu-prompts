@@ -54,6 +54,7 @@ MODELS=models.anthropic.yaml docker compose up -d chancery
 | `models.gemini.yaml` | `GEMINI_API_KEY` |
 | `models.deepseek.yaml` | `DEEPSEEK_API_KEY` |
 | `models.multi.yaml` | `GEMINI_API_KEY`, `ANTHROPIC_API_KEY` |
+| `models.claude-cli.yaml` | `GEMINI_API_KEY` for `qual-coder` only; every one-shot tier runs through dragoman's [claude-bridge](https://github.com/mdijkstra-oss/dragoman/tree/main/cmd/claude-bridge) on a signed-in Claude Code (`make bridge` there, `CLAUDE_BRIDGE_KEY` set to anything) |
 
 Only `models.multi.yaml` spreads the tiers across providers. Each of the others runs everything on one key, which makes both `deep-analysis-filter` voters the same model voting against itself — fine for development, not for research output.
 

@@ -11,6 +11,8 @@ services:
       ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
       GEMINI_API_KEY: ${GEMINI_API_KEY:-}
       DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY:-}
+      # Any value: the bridge ignores it, dragoman only checks that it is set.
+      CLAUDE_BRIDGE_KEY: ${CLAUDE_BRIDGE_KEY:-}
     volumes:
       - ./dragoman.yaml:/etc/dragoman/dragoman.yaml:ro
     # --config replaces dragoman's embedded service table wholesale. Naming a

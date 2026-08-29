@@ -1,0 +1,55 @@
+# Every one-shot tier on the claude-bridge (a signed-in Claude Code, no key);
+# the qual-coder tiers, which loop over tools, run on GEMINI_API_KEY.
+# Set CLAUDE_BRIDGE_KEY to anything and run `make bridge` in the dragoman repo.
+models:
+  # corpus-describer, file-hyde, generic-hyde, hyde-generator, topic-assigner
+  lite:
+    model: claude-cli/claude-haiku-4-5
+    reasoning_effort: low
+
+  # region-marker
+  mid:
+    model: claude-cli/claude-sonnet-5
+    reasoning_effort: low
+
+  # qual-coder — tool loops, which the bridge cannot run. The same model and
+  # effort as models.multi.yaml, so the main loop matches what is shipped.
+  strong:
+    model: gemini/gemini-3.7-flash
+    reasoning_effort: low
+
+  # scout-filter and semantic-filter run their tier's model at its thinking floor,
+  # which for Claude is low.
+  mid-instant:
+    extends: mid
+    reasoning_effort: low
+  strong-instant:
+    model: claude-cli/claude-opus-5
+    reasoning_effort: low
+
+  # region-finder — occurrence finding follows exclusion rules; it needs a
+  # competent model at low effort.
+  finder:
+    model: claude-cli/claude-sonnet-5
+    reasoning_effort: low
+
+  # An alias prompt resolves against shared/ and goes in front of the agent's own.
+  strong-planning:
+    extends: strong
+    prompt: nabu/modes/planning.md
+  strong-execution:
+    extends: strong
+    prompt: nabu/modes/execution.md
+
+  # deep-analysis-adjudicate and refine-code.
+  expert:
+    model: claude-cli/claude-opus-5
+    reasoning_effort: medium
+
+  # deep-analysis-filter voters.
+  voter-one:
+    model: claude-cli/claude-sonnet-5
+    reasoning_effort: medium
+  voter-two:
+    model: claude-cli/claude-sonnet-5
+    reasoning_effort: low

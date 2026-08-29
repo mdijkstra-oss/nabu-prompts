@@ -29,3 +29,11 @@ deepseek:
   auth: DEEPSEEK_API_KEY
   max_output_tokens_as: max_tokens
   schema_as_prompt: true
+
+# The claude-bridge from the dragoman repo, running on the host, answering
+# through a signed-in Claude Code instead of a key. One turn, no tools; the
+# bridge refuses anything else. Reached only by a models file that names it.
+claude-cli:
+  endpoint: http://host.docker.internal:8082/v1
+  protocol: anthropic-messages
+  auth: CLAUDE_BRIDGE_KEY
