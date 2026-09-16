@@ -7,14 +7,10 @@ models:
   mid:
     model: codex/gpt-5.6-terra
     reasoning_effort: none
-    verbosity: low
-    reasoning_summary: concise
 
   strong:
     model: codex/gpt-5.6-sol
-    reasoning_effort: medium
-    verbosity: low
-    reasoning_summary: concise
+    reasoning_effort: high
 
   mid-instant:
     extends: mid
@@ -37,16 +33,10 @@ models:
   expert:
     model: codex/gpt-5.6-sol
     reasoning_effort: low
-    verbosity: low
-    reasoning_summary: concise
 
   voter-one:
     model: codex/gpt-5.6-terra
     reasoning_effort: medium
-    verbosity: low
-    reasoning_summary: concise
   voter-two:
     model: codex/gpt-5.6-terra
     reasoning_effort: low
-    verbosity: low
-    reasoning_summary: concise
