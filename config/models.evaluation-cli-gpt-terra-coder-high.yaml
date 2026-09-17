@@ -1,0 +1,37 @@
+# Experimental GPT table: only voter-one changes from the Terra control.
+# Higher reasoning is a quality hypothesis for direct qualitative coding, not a
+# default upgrade. Evaluate it against the same selected full documents first.
+models:
+  lite:
+    model: codex/gpt-5.6-luna
+    reasoning_effort: none
+  mid:
+    model: codex/gpt-5.6-terra
+    reasoning_effort: none
+  strong:
+    model: codex/gpt-5.6-sol
+    reasoning_effort: high
+  mid-instant:
+    extends: mid
+    reasoning_effort: none
+  strong-instant:
+    extends: strong
+    reasoning_effort: none
+  finder:
+    model: codex/gpt-5.6-terra
+    reasoning_effort: low
+  strong-planning:
+    extends: strong
+    prompt: nabu/modes/planning.md
+  strong-execution:
+    extends: strong
+    prompt: nabu/modes/execution.md
+  expert:
+    model: codex/gpt-5.6-terra
+    reasoning_effort: low
+  voter-one:
+    model: codex/gpt-5.6-terra
+    reasoning_effort: high
+  voter-two:
+    model: codex/gpt-5.6-terra
+    reasoning_effort: low

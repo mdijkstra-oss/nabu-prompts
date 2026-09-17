@@ -1,0 +1,36 @@
+# Evaluation-only tiers: every route runs through the signed-in Claude CLI.
+# The quality hypothesis is independent voting, not an automatic move to Opus.
+models:
+  lite:
+    model: claude-cli/claude-haiku-4-5
+    reasoning_effort: low
+  mid:
+    model: claude-cli/claude-sonnet-5
+    reasoning_effort: low
+  strong:
+    model: claude-cli/claude-sonnet-5
+    reasoning_effort: medium
+  mid-instant:
+    extends: mid
+    reasoning_effort: low
+  strong-instant:
+    extends: strong
+    reasoning_effort: low
+  finder:
+    model: claude-cli/claude-sonnet-5
+    reasoning_effort: low
+  strong-planning:
+    extends: strong
+    prompt: nabu/modes/planning.md
+  strong-execution:
+    extends: strong
+    prompt: nabu/modes/execution.md
+  expert:
+    model: claude-cli/claude-sonnet-5
+    reasoning_effort: low
+  voter-one:
+    model: claude-cli/claude-sonnet-5
+    reasoning_effort: medium
+  voter-two:
+    model: claude-cli/claude-sonnet-5
+    reasoning_effort: low

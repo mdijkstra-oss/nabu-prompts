@@ -1,0 +1,37 @@
+# Experimental GPT table: only the existing adjudicator is escalated.
+# Voters remain the Terra control pair. This isolates whether a more capable
+# judge resolves one-sided selections better than the moderate adjudicator.
+models:
+  lite:
+    model: codex/gpt-5.6-luna
+    reasoning_effort: none
+  mid:
+    model: codex/gpt-5.6-terra
+    reasoning_effort: none
+  strong:
+    model: codex/gpt-5.6-sol
+    reasoning_effort: high
+  mid-instant:
+    extends: mid
+    reasoning_effort: none
+  strong-instant:
+    extends: strong
+    reasoning_effort: none
+  finder:
+    model: codex/gpt-5.6-terra
+    reasoning_effort: low
+  strong-planning:
+    extends: strong
+    prompt: nabu/modes/planning.md
+  strong-execution:
+    extends: strong
+    prompt: nabu/modes/execution.md
+  expert:
+    model: codex/gpt-5.6-sol
+    reasoning_effort: high
+  voter-one:
+    model: codex/gpt-5.6-terra
+    reasoning_effort: medium
+  voter-two:
+    model: codex/gpt-5.6-terra
+    reasoning_effort: low

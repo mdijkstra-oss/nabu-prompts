@@ -1,0 +1,37 @@
+# Evaluation-only cross-provider consensus through the signed-in CLI bridges.
+# It gives the two voters different model families at moderate effort; the
+# adjudicator is intentionally not upgraded to a premium model by default.
+models:
+  lite:
+    model: codex/gpt-5.6-luna
+    reasoning_effort: none
+  mid:
+    model: codex/gpt-5.6-terra
+    reasoning_effort: none
+  strong:
+    model: codex/gpt-5.6-terra
+    reasoning_effort: medium
+  mid-instant:
+    extends: mid
+    reasoning_effort: none
+  strong-instant:
+    extends: strong
+    reasoning_effort: none
+  finder:
+    model: codex/gpt-5.6-terra
+    reasoning_effort: low
+  strong-planning:
+    extends: strong
+    prompt: nabu/modes/planning.md
+  strong-execution:
+    extends: strong
+    prompt: nabu/modes/execution.md
+  expert:
+    model: codex/gpt-5.6-terra
+    reasoning_effort: low
+  voter-one:
+    model: claude-cli/claude-sonnet-5
+    reasoning_effort: medium
+  voter-two:
+    model: codex/gpt-5.6-terra
+    reasoning_effort: low
